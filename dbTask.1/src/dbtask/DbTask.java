@@ -34,9 +34,20 @@ public class DbTask {
 
     /*  Надо переписать вот эту функцию, чтоб она корректно списывала и зачисляла средства на счета. Счета не могу быть отрицательными */
     public static void transfer(@NotNull Connection connection, int from, int to, long value) throws SQLException {
-      if(from != to) {
-          Executor.execUpdate(connection, "update account set value = value - ? where id = ?", value, from);
-          Executor.execUpdate(connection, "update account set value = value + ? where id = ?", value, to);
-      }
+        if(from != to) {
+            if (getValue(connection, from) >= value) {
+                Executor.execUpdate(connection, "update account set value = value - ? where id = ?", value, from);
+                Executor.execUpdate(connection, "update account set value = value + ? where id = ?", value, to);
+            }
+        }
+    }
+
+    public static long getValue(@NotNull Connection connection, int owner) throws SQLException {
+        return Executor.execQuery(connection, "SELECT value FROM account WHERE id=" + String.valueOf(owner),
+                resultSet -> {
+                    resultSet.next();
+                    return resultSet.getLong(1);
+                }
+        );
     }
 }
